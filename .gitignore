@@ -1,0 +1,19 @@
+# https://stackoverflow.com/a/987162
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!README.md
+!moseq_tools/**
+!pandas_tools/**
+!tracking_tools/**
+!utility/**
+!visualization/**
+
+
+# ...even if they are in subdirectories
+!*/
+
+# again except caches
+__pycache__/
