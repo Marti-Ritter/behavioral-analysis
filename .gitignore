@@ -10,6 +10,7 @@
 !tracking_tools/**
 !utility/**
 !visualization/**
+!math_tools/**
 
 
 # ...even if they are in subdirectories
