@@ -6,7 +6,6 @@ import seaborn as sns
 from shapely.plotting import patch_from_polygon
 
 from .matplotlib_funcs import create_canvas
-from ..socialscan_tools.arena import areas_to_polygons, zones_to_polygons
 
 
 def plot_polygon(polygon, name=None, ax=None, polygon_kwargs=None, plot_label=True, label_kwargs=None):
@@ -243,34 +242,6 @@ def plot_arena(polygon_dict, arena_size=None, dpi=100, polygon_color="black", po
     plot_polygons_to_ax(ax, polygon_dict, polygon_color=polygon_color, polygon_alpha=polygon_alpha,
                         plot_labels=plot_labels, label_kwargs=dict(size=font_size, weight=font_weight), **plot_kwargs)
     return ax
-
-
-def rfid_location_check(rfid_data, areas, zones):
-    """Plot the rfid grid of the social arena and check for the presence of the coils in the input data.
-
-    :param rfid_data: RfidData object that contains the rfid records to be checked
-    :type rfid_data: SocialArenaAnalysis.analysis.data.structures.RfidData
-    :param areas: dict of areas in the arena
-    :type areas: dict
-    :param zones: dict of zones in the arena, should contain all of the zones present in rfid_data
-    :type zones: dict
-    :return: A tuple of a plotted rfid report, the zones which were recorded in rfid_data, and the zones missing
-    :rtype: (plt.Figure, dict, dict)
-    """
-    all_zones = set(rfid_data.zone_translation_dict.values())
-
-    recorded_zones = set(rfid_data.get_uniques("zone"))
-    recorded_zone_dict = {zone: zones[zone] for zone in recorded_zones}
-
-    missing_zones = all_zones.difference(recorded_zones)
-    missing_zone_dict = {zone: zones[zone] for zone in missing_zones}
-
-    fig = plot_arena((720, 480), 50, areas_to_polygons(areas, zones), polygon_color="black")
-    plot_arena((720, 480), 50, zones_to_polygons(recorded_zone_dict), polygon_color="blue", polygon_alpha=0.5,
-               input_fig=fig)
-    plot_arena((720, 480), 50, zones_to_polygons(missing_zone_dict), polygon_color="red", input_fig=fig)
-
-    return fig, recorded_zones, missing_zones
 
 
 def plot_chunks_timeline(input_chunk_df, center=0.5, height=1., alpha=0.1, color="blue", start_col="From Second",
