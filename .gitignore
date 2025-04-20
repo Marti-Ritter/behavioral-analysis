@@ -11,10 +11,11 @@
 !utility/**
 !visualization/**
 !math_tools/**
-
+!behavior_extraction/**
 
 # ...even if they are in subdirectories
 !*/
 
-# again except caches
+# again except caches and pycharm stuff
 __pycache__/
+.idea/
