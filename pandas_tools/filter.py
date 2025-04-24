@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from socialscan_tools.data_processing import fit_series_to_frame
-
 
 def get_modified_zscore(input_series):
     """
@@ -106,3 +104,7 @@ def filter_split_pd(input_pd, boolean_filter_series):
     boolean_filter = boolean_filter_series if isinstance(input_pd, pd.Series) else fit_series_to_frame(
         boolean_filter_series, input_pd)
     return input_pd.where(~boolean_filter), input_pd.where(boolean_filter)
+
+
+def fit_series_to_frame(input_series, input_frame):
+    return pd.DataFrame({col: input_series for col in input_frame.columns}).set_index(input_frame.index)
