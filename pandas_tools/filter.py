@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from socialscan_tools.data_processing import fit_series_to_frame
+
 
 def get_modified_zscore(input_series):
     """
@@ -98,3 +100,9 @@ def filter_df_by_rolling_modified_zscore(input_df, cols_to_filter=None, z_thresh
         output_df[col] = filter_series_by_rolling_modified_zscore(input_df[col], z_threshold=z_threshold, **kwargs)
     output_df.loc[output_df[filter_cols].isna().any(axis=1), filter_cols] = np.nan
     return output_df
+
+
+def filter_split_pd(input_pd, boolean_filter_series):
+    boolean_filter = boolean_filter_series if isinstance(input_pd, pd.Series) else fit_series_to_frame(
+        boolean_filter_series, input_pd)
+    return input_pd.where(~boolean_filter), input_pd.where(boolean_filter)

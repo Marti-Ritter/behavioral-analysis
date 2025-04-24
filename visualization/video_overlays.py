@@ -14,7 +14,7 @@ from .plots import plot_polygons_to_ax
 from ..math_tools.geometry_funcs import create_ellipsis, bbox_to_polygon, scale_and_pad_bbox, create_box, \
     get_bbox, get_rois_from_bbox_list
 from ..math_tools.matrix_funcs import apply_transform_matrix
-from ..socialscan_tools.data_processing import filter_split_pd
+from ..pandas_tools.filter import filter_split_pd
 from ..tracking_tools.funcs import apply_transform_matrix_to_track_df
 from ..tracking_tools.plots import plot_keypoint_instance
 from ..visualization.matplotlib_funcs import get_function_added_artists
