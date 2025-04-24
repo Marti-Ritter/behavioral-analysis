@@ -352,3 +352,42 @@ def get_arena_polygon_from_position(arena_polygon_dict, input_position, return_a
         raise ValueError("Position is outside of arena")
     else:  # outside_behavior is "return" or "closest"
         return None if not return_all else []
+
+
+def save_arena_to_json(arena_dict, filename, overwrite=False):
+    """
+    Saves a given arena dictionary mapping polygon labels to their shapely Polygons to a JSON file.
+    To accomplish this, the function first converts each polygon in the dictionary to a numpy array by accessing its exterior coordinates.
+
+    :param arena_dict: A dictionary mapping polygon labels to their shapely Polygons.
+    :type arena_dict: dict
+    :param filename: The path of the JSON file to save the arena dictionary to.
+    :type filename: str
+    :param overwrite: Whether or not to overwrite an existing file with the same name. Defaults to False.
+    :type overwrite: bool
+    """
+    import json
+    import numpy as np
+    array_arena_dict = {polygon_label: np.stack(polygon.exterior.xy).T.tolist() for polygon_label, polygon in
+                        arena_dict.items()}
+    if not overwrite and os.path.exists(filename):
+        raise FileExistsError(f"File {filename} already exists!")
+    with open(filename, 'w') as out_file:
+        json.dump(array_arena_dict, out_file)
+
+
+def load_arena_from_json(filename):
+    """
+    Loads an arena from a JSON file. The loaded array is expected to contain a mapping of polygon labels to their
+    corresponding exterior coordinates. The loaded array is converted into a list of Polygons using the `Polygon` class.
+
+    :param filename: The path to the JSON file containing the arena data.
+    :type filename: str
+    :return: A dictionary containing the arena data.
+    :rtype: dict
+    """
+    import json
+    from shapely import Polygon
+    with open(filename, "r") as json_file:
+        array_arena_dict = json.load(json_file)
+    return {polygon_label: Polygon(array) for polygon_label, array in array_arena_dict.items()}

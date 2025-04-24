@@ -657,17 +657,44 @@ def fill_frame_skips_in_video(input_video_path, target_frame_rate, output_path=N
     :type overwrite: bool
     :rtype: None
     """
-    target_path = output_path if output_path is not None else "_full.".join(input_video_path.rsplit(".", 1))
+    remux_video(input_video_path, output_path=output_path, video_codec=video_codec, codec_args=codec_args,
+                overwrite=overwrite, fps=target_frame_rate)
+
+
+def remux_video(input_video_path, output_path=None, video_codec=None, codec_args=None, overwrite=False, **filter_kwargs):
+    """
+    Remuxes a video file to the specified codec and filters.
+
+    :param input_video_path: The path to the input video file.
+    :type input_video_path: str
+    :param output_path: The path where the remuxed video will be saved. If not provided, the original filename with
+    "_remuxed." prepended will be used as the output path.
+    :type output_path: str or None
+    :param video_codec: The codec to use for encoding the video. Default is "h264".
+    :type video_codec: str or None
+    :param codec_args: Additional arguments to pass to ffmpeg when encoding the video. Default is "-crf 18".
+    :type codec_args: str or None
+    :param overwrite: Whether to overwrite an existing file with the same name as the input file. Default is False.
+    :type overwrite: bool
+    :param filter_kwargs: Keyword arguments to pass to ffmpeg when encoding the video. These should be in the format
+    "filter_name=value".
+    :type filter_kwargs: dict
+    :return: The path to the remuxed video file.
+    :rtype: str
+    """
+
+    target_path = output_path if output_path is not None else "_remuxed.".join(input_video_path.rsplit(".", 1))
     if os.path.exists(target_path) and not overwrite:
         print("Video already exists!")
         return
 
     video_codec = video_codec if video_codec is not None else "h264"
     codec_args = codec_args if codec_args is not None else "-crf 18"
-    powershell_command = f"ffmpeg -y -i '{input_video_path}' -vf \"fps={target_frame_rate}\" " \
-                         f"-c {video_codec} {codec_args} '{target_path}'"
+    filter_string = (
+            "-vf \"" + ";".join([f"{key}={value}" for key, value in filter_kwargs.items()]) + "\" "
+    ) if filter_kwargs else ""
 
-    # invoke process
+    powershell_command = f"ffmpeg -i '{input_video_path}' {filter_string}-c:v {video_codec} {codec_args} '{output_path}'"
     run_command_in_powershell(powershell_command, show=True, keep_open=False, blocking=True, return_result=False)
 
 
