@@ -1134,3 +1134,9 @@ def get_pattern_occurrence_series(input_series, *target_patterns):
         pattern_occurrence_list.append(get_single_pattern_occurrence_series(input_series, target_pattern))
     pattern_occurrence_df = pd.concat(pattern_occurrence_list, axis=1)
     return pattern_occurrence_df.any(axis=1)
+
+
+def reindex_df_to_col_product(input_df, product_cols):
+    product_values = [input_df[col].unique() for col in product_cols]
+    reindexed_df = input_df.reset_index(drop=False).set_index(product_cols)
+    return reindexed_df.reindex(index=pd.MultiIndex.from_product(product_values, names=product_cols))

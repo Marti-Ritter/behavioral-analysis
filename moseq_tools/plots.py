@@ -12,13 +12,13 @@ from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.spatial.distance import squareform
 from tqdm.auto import tqdm
 
-from ..visualization.matplotlib_funcs import create_canvas, save_matplotlib_animation
+from frame_pipeline.matplotlib_funcs import create_canvas, save_matplotlib_animation
 from ..tracking_tools.plots import normalize_keypoint_df_for_plotting, plot_keypoint_instance
 
 from .syllable_funcs import normalize_median_trajectories_for_plotting
 from ..pandas_tools.funcs import pd_reindex_to_index_union, pd_flatten_indices
 from ..visualization.networkx_funcs import plot_connections_from_pair_dict
-from ..visualization.pil_funcs import stitch_animated_gif_list, ensure_pil_image
+from frame_pipeline.pil_funcs import stitch_animated_gif_list, ensure_pil_image
 
 
 def _pd_flatten_unionize_sort_indices(input_pd_list):
@@ -396,7 +396,7 @@ def create_single_trajectory_gif(single_trajectory_df, output_path, skeleton_df=
         else:
             alpha = alpha_series.loc[i]
 
-        plot_keypoint_instance(normalized_trajectory_df.loc[i], ax=ax, skeleton_df=skeleton_df, plot_labels=False, 
+        plot_keypoint_instance(normalized_trajectory_df.loc[i], ax=ax, skeleton_df=skeleton_df, plot_labels=False,
                                keypoint_kwargs=dict(alpha=alpha), skeleton_kwargs=dict(alpha=alpha))
 
         if title_text is not None:

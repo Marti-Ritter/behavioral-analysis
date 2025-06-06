@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 
-from ..visualization.matplotlib_funcs import create_canvas, save_matplotlib_animation
+from ..frame_pipeline.matplotlib_funcs import create_canvas, save_matplotlib_animation
 
 
 def plot_keypoints(keypoint_df, ax=None, x="x", y="y", **plot_kwargs):
@@ -94,7 +94,8 @@ def plot_keypoint_skeleton(keypoint_df, skeleton_df, ax=None, x="x", y="y", **pl
     return ax
 
 
-def plot_keypoint_instance(keypoint_df, skeleton_df=None, plot_labels=False, ax=None, keypoint_kwargs=None, skeleton_kwargs=None, label_kwargs=None, **shared_kwargs):
+def plot_keypoint_instance(keypoint_df, skeleton_df=None, plot_labels=False, ax=None, keypoint_kwargs=None,
+                           skeleton_kwargs=None, label_kwargs=None, **shared_kwargs):
     """
     A function to plot all details of a single instance of keypoints, potentially with a skeleton overlay, and optionally with labels.
     See the documentation of plot_keypoints, plot_keypoint_skeleton, and plot_keypoint_labels for more details on the individual plotting functions.
@@ -122,6 +123,9 @@ def plot_keypoint_instance(keypoint_df, skeleton_df=None, plot_labels=False, ax=
     if ax is None:
         _, ax = plt.subplots()
 
+    if keypoint_df.empty:
+        return ax
+
     if keypoint_kwargs is None:
         keypoint_kwargs = {}
     if skeleton_kwargs is None:
@@ -134,6 +138,18 @@ def plot_keypoint_instance(keypoint_df, skeleton_df=None, plot_labels=False, ax=
     plot_keypoints(keypoint_df, ax=ax, **keypoint_kwargs, **shared_kwargs)
     if plot_labels:
         plot_keypoint_labels(keypoint_df, ax=ax, **label_kwargs, **shared_kwargs)
+    return ax
+
+
+def plot_keypoint_instances(multi_instance_keypoint_df, ax=None, *args, **kwargs):
+    if ax is None:
+        _, ax = plt.subplots()
+
+    instance_identifier_levels = multi_instance_keypoint_df.index.names[:-1]
+    for identifier, single_keypoint_df in multi_instance_keypoint_df.groupby(instance_identifier_levels):
+        single_keypoint_df = single_keypoint_df.droplevel(instance_identifier_levels, axis=0)
+
+        plot_keypoint_instance(single_keypoint_df, ax=ax, *args, **kwargs)
     return ax
 
 

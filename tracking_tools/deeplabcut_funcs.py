@@ -3,7 +3,7 @@ import os
 import cv2
 import pandas as pd
 from tqdm.auto import tqdm
-from ..visualization.video_funcs import get_frames
+from video_tools.video_funcs import get_frames
 
 
 def dlc_el_pickle_to_trace_df_dict(el_pickle_path):
@@ -62,7 +62,7 @@ def extract_dlc_frames_from_videos(dlc_format_labels, output_root, video_source_
                 cv2.imwrite(frame_path, frame)
 
 
-def dlc_to_tracking_df(input_dlc_df):
+def dlc_to_tracking_df(input_dlc_df, multi_track=False):
     dlc_predictions_df = input_dlc_df.droplevel(level="scorer", axis=1)
     _index_df = dlc_predictions_df.index.to_series().apply(lambda x: os.path.basename(x)).str.split("_", expand=True)
     _index_df.columns = ["video_name", "frame_index"]
@@ -72,3 +72,14 @@ def dlc_to_tracking_df(input_dlc_df):
     dlc_predictions_df = dlc_predictions_df.rename_axis(["keypoint_name", "keypoint_feature"], axis=1)
     dlc_predictions_df = dlc_predictions_df.rename({"likelihood": "score"}, axis=1, level="keypoint_feature")
     return dlc_predictions_df
+
+
+def dlc_predictions_to_tracking_df(input_dlc_predictions_df, single_animal=True):
+    tracking_df = input_dlc_predictions_df.droplevel(level="scorer", axis=1)
+    if single_animal:
+        tracking_df.index.name = "frame_index"
+    else:
+        raise NotImplementedError("Multi-animal transformation is not implemented!")
+    tracking_df = tracking_df.rename_axis(["keypoint_name", "keypoint_feature"], axis=1)
+    tracking_df = tracking_df.rename({"likelihood": "score"}, axis=1, level="keypoint_feature")
+    return tracking_df

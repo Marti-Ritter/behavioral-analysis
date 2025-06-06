@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 
+import warnings
+
 from ..pandas_tools.funcs import extract_neighbourhood_df
-from ..math_tools.angle_funcs import rotate_2d_point_groups_np
+from ..math_tools.angle_funcs import rotate_2d_point_groups_np, cart2pol
 from ..math_tools.matrix_funcs import apply_transform_matrix
 
 
@@ -94,3 +96,126 @@ def aggregate_keypoint_df(input_keypoint_df, aggregation_function="median", leve
         levels_to_aggregate = -1
     agg_keypoint_df = input_keypoint_df.groupby(level=levels_to_aggregate).agg(aggregation_function)
     return agg_keypoint_df
+
+
+def track_to_centroid_df(track_df, aggregate_func="median"):
+    track_x_df, track_y_df = (track_df.xs("x", level="keypoint_feature", axis=1),
+                              track_df.xs("y", level="keypoint_feature", axis=1))
+    agg_x, agg_y = track_x_df.agg(aggregate_func, axis=1), track_y_df.agg(aggregate_func, axis=1)
+    return pd.DataFrame(dict(x=agg_x, y=agg_y))
+
+
+def track_to_roi_df(track_df, size_override=None, aggregate_func="median", size_quantile=0.99, size_multiplier=1.05):
+    track_x_df, track_y_df = (track_df.xs("x", level="keypoint_feature", axis=1),
+                              track_df.xs("y", level="keypoint_feature", axis=1))
+    centroid_df = track_to_centroid_df(track_df, aggregate_func=aggregate_func)
+    centroid_x, centroid_y = centroid_df["x"], centroid_df["y"]
+
+    if size_override is None:
+        width = (track_x_df.T - centroid_x).T.abs().quantile(size_quantile).max()
+        height = (track_y_df.T - centroid_y).T.abs().quantile(size_quantile).max()
+        square_size = max(width, height) * size_multiplier
+        width, height = square_size, square_size
+    else:
+        width, height = size_override
+
+    return pd.DataFrame(dict(x=centroid_x - width//2, y=centroid_y - height//2, w=width, h=height))
+
+
+def track_to_distance_orientation_df(track_df, orientation_reference_point, position_reference_point,
+                                     orientation_in_degrees=True):
+    sliced_track_df = track_df.loc[:, pd.IndexSlice[:, ["x", "y"]]]
+
+    if isinstance(orientation_reference_point, pd.DataFrame):
+        orientation_reference_df = orientation_reference_point
+    else:
+        orientation_reference_df = sliced_track_df.loc[:, orientation_reference_point]
+
+    if isinstance(position_reference_point, pd.DataFrame):
+        position_reference_df = position_reference_point
+    else:
+        position_reference_df = sliced_track_df.loc[:, position_reference_point]
+
+    normalized_orientation_df = orientation_reference_df - position_reference_df
+    length_orientation_df = normalized_orientation_df.apply(lambda r: cart2pol(r["x"], r["y"]), axis=1).apply(pd.Series)
+    length_orientation_df.columns = ["rho", "phi"]
+
+    if orientation_in_degrees:
+        length_orientation_df["phi"] = length_orientation_df["phi"].apply(np.rad2deg)
+
+    return length_orientation_df
+
+
+def track_to_norm_df(track_df, orientation_reference_point, position_reference_point=None, aggregate_func="median"):
+    if position_reference_point is None:
+        position_reference_df = track_to_centroid_df(track_df, aggregate_func=aggregate_func)
+    elif isinstance(position_reference_point, pd.DataFrame):
+        position_reference_df = position_reference_point
+    else:
+        position_reference_df = track_df.loc[:, position_reference_point]
+
+    length_orientation_df = track_to_distance_orientation_df(track_df,
+                                                             orientation_reference_point=orientation_reference_point,
+                                                             position_reference_point=position_reference_df)
+
+    return position_reference_df.join(length_orientation_df["phi"].rename("heading"))
+
+
+def kpms_style_example_trajectories(track_df, bout_df, minimum_bout_length=3, pre=5, post=15,
+                                    pca_samples=50000, pca_dim=4, n_neighbors=50, num_samples=50,
+                                    random_state=None):
+    from sklearn.decomposition import PCA
+    from sklearn.neighbors import NearestNeighbors
+
+    bout_df = bout_df[bout_df["bout_length"].ge(minimum_bout_length)]
+    behavior_subtrack_df = pd.concat({behavior: extract_subtrack_df(
+        track_df, behavior_bout_df.index, span_before=pre, span_after=post
+    ) for behavior, behavior_bout_df in bout_df.groupby("behavior_name")}, names=["behavior_name"])
+
+    rng = np.random.default_rng(random_state)
+
+    X = behavior_subtrack_df.loc[:, pd.IndexSlice[:, ["x", "y"]]].unstack("frame_index")
+    X = X.interpolate(method="linear", axis=0, limit_direction="both")
+
+    if X.shape[0] > pca_samples:
+        X = X.sample(n=pca_samples, random_state=rng)
+    else:
+        warnings.warn(f"Unable to get {pca_samples} samples from {X.shape[0]} bouts")
+
+    pca = PCA(n_components=pca_dim).fit(X)
+    X_pca = pca.transform(X)
+    all_nbrs = NearestNeighbors(n_neighbors=n_neighbors).fit(X_pca)
+
+    sampled_instances = {}
+
+    for behavior_name, behavior_bouts in behavior_subtrack_df.groupby("behavior_name"):
+        behavior_bouts = behavior_bouts.unstack("frame_index")
+
+        if n_neighbors > len(behavior_bouts):
+            continue
+
+        X = behavior_bouts.copy()
+        X = X.loc[:, pd.IndexSlice[:, ["x", "y"]]]
+        X = X.interpolate(method="linear", axis=0, limit_direction="both")
+
+        X_pca = pca.transform(X)
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors).fit(X_pca)
+        distances, indices = nbrs.kneighbors(X_pca)
+        local_density = 1 / distances.mean(1)
+
+        distances, _ = all_nbrs.kneighbors(X_pca)
+        global_density = 1 / distances.mean(1)
+        exemplar = np.argmax(local_density / global_density)
+        samples = rng.choice(indices[exemplar], num_samples, replace=False)
+        sampled_instances[behavior_name] = behavior_bouts.iloc[samples]
+    return pd.concat(sampled_instances.values(), axis=0).stack("frame_index", future_stack=True)
+
+
+def sampled_trajectories_to_bout_df(sampled_trajectory_df):
+    bout_df_list = []
+    for behavior_name, behavior_bouts in sampled_trajectory_df.groupby("behavior_name"):
+        unique_indices = behavior_bouts.index.droplevel(["behavior_name", "frame_index"]).unique()
+        unique_indices = unique_indices.rename("frame_index", level=-1)
+        bout_df_list.append(pd.DataFrame(dict(end_frame=np.nan, bout_length=np.nan, behavior_name=behavior_name),
+                                         index=unique_indices))
+    return pd.concat(bout_df_list, axis=0)

@@ -12,7 +12,8 @@
 !visualization/**
 !math_tools/**
 !behavior_extraction/**
-!lmt_tools/**
+!frame_pipeline/**
+!user_input/**
 
 # ...even if they are in subdirectories
 !*/

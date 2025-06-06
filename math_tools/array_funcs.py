@@ -172,3 +172,24 @@ def truncate_array_with_mask(input_array, mask, fill_value=np.nan):
     :rtype: np.ndarray
     """
     return np.where(mask, input_array, np.full_like(input_array.astype(float), fill_value))
+
+
+def get_middle_index(array_length):
+    """
+    Just a definition for the "middle" of an array. This is relative to index 0, and results in a length 11 array
+    returning 5:
+    0 1 2 3 4 5 6 7 8 9 10 (length 11)
+    I I I I I X I I I I I (5 is the middle index, because it's at the center of an odd length array)
+
+    For an even length array, this will be the left "middle" index.
+    0 1 2 3 4 5 6 7 8 9 (length 10)
+    I I I I X I I I I I (4 is the middle index)
+
+    This definition is necessary for the alignment of e.g. VAME motif arrays.
+
+    :param array_length: The length of an array
+    :type array_length: int
+    :return: The index that represents "middle" in the context of this function
+    :type: int
+    """
+    return np.ceil(array_length / 2).astype(int) - 1  # minus 1 due to zero-indexing

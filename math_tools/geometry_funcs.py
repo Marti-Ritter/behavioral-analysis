@@ -237,8 +237,8 @@ def get_rois_from_bbox_list(list_of_bbox, mode="points"):
 
 def apply_transform_to_bbox(bbox, transform_matrix):
     x, y, w, h = bbox
-    return *apply_transform_matrix(np.array([x, y]), transform_matrix), *apply_transform_matrix(np.array([w, h]),
-                                                                                                transform_matrix)
+    return (*apply_transform_matrix(np.array([x, y]), transform_matrix),
+            *apply_transform_matrix(np.array([w, h]), transform_matrix))
 
 
 def fit_bbox_to_limits(bbox, limits, raise_error_when_outside=True):
@@ -257,7 +257,7 @@ def fit_bbox_to_limits(bbox, limits, raise_error_when_outside=True):
 
 
 def frame_shape_to_bbox(frame_shape):
-    return 0, 0, *frame_shape
+    return (0, 0, *frame_shape)
 
 
 def get_bbox_intersection(bbox1, bbox2):
@@ -320,53 +320,6 @@ def get_polygon_centroid(list_or_polygons):
 
 def check_trace_in_area(trace_df, area_polygon_list):
     return trace_df.apply(lambda x: any([poly.contains(Point(x)) for poly in area_polygon_list]), axis=1)
-
-
-def ensure_bbox_inside_frame(frame_size, bbox):
-    """
-    Transform a bounding box so that it is entirely inside the frame limits.
-
-    :param frame_size: A tuple containing the width and height of the video frame.
-    :type frame_size: tuple(int, int)
-    :param bbox: A tuple containing the x-coordinate, y-coordinate, width, and height of the bounding box.
-    :type bbox: tuple(int, int, int, int)
-    :return: A tuple containing the x-coordinate, y-coordinate, width, and height of the transformed bounding box.
-    :rtype: tuple(int, int, int, int)
-    """
-
-    x_min, y_min, width, height = bbox
-    frame_width, frame_height = frame_size
-
-    # Calculate the x_max and y_max coordinates of the bounding box
-    x_max = x_min + width
-    y_max = y_min + height
-
-    # If the bounding box is already inside the frame limits, return it
-    if x_min >= 0 and y_min >= 0 and x_max <= frame_width and y_max <= frame_height:
-        return bbox
-
-    # Calculate the amount to shift the bounding box in the x and y directions
-    x_shift = 0
-    y_shift = 0
-    if x_min < 0:
-        x_shift = -x_min
-    elif x_max > frame_width:
-        x_shift = frame_width - x_max
-
-    if y_min < 0:
-        y_shift = -y_min
-    elif y_max > frame_height:
-        y_shift = frame_height - y_max
-
-    # Transform the bounding box with the calculated shift
-    new_x_min = x_min + x_shift
-    new_y_min = y_min + y_shift
-
-    # Correct width and height if necessary
-    width = min(width, frame_width - new_x_min)
-    height = min(height, frame_height - new_y_min)
-
-    return new_x_min, new_y_min, width, height
 
 
 def get_sphere_coordinates(center_point, radius, resolution=20):

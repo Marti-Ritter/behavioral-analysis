@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from ..utility.builtin_classes.dicts import update_default_dict
 
-from .matplotlib_funcs import get_plot_elements
+from frame_pipeline.matplotlib_funcs import get_plot_elements
 from ..utility.general import get_public_attributes, convert_to_func
 
 

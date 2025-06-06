@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 import seaborn as sns
 from shapely.plotting import patch_from_polygon
 
-from .matplotlib_funcs import create_canvas
+from frame_pipeline.matplotlib_funcs import create_canvas
 
 
 def plot_polygon(polygon, name=None, ax=None, polygon_kwargs=None, plot_label=True, label_kwargs=None):

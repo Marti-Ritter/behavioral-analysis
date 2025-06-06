@@ -55,7 +55,7 @@ def rle_arbitrary_single_index_series(input_series, drop_run_values=tuple()):
 
     rle_df = rle_numeric_single_index_series(pd.Series(data=codes, index=input_series.index),
                                              drop_run_values=mapped_drop_values)
-    rle_df["run_value"] = rle_df["run_value"].map(uniques_dict.get)
+    rle_df["run_value"] = rle_df["run_value"].map(uniques_dict.get).astype(input_series.dtype)
     return rle_df
 
 

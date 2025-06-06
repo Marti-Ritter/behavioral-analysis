@@ -8,10 +8,7 @@ def ensure_list(input_object):
     :return:
     :rtype: list
     """
-    if not isinstance(input_object, list):
-        return [input_object]
-    else:
-        return input_object
+    return (input_object if isinstance(input_object, list) else [input_object])
 
 
 def flatten_iterable(iter_obj, seq_types=(list, tuple), inplace=False):

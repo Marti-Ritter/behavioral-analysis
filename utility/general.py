@@ -2,6 +2,7 @@ import inspect
 import math
 import sys
 from functools import wraps
+from inspect import signature
 
 
 def convert_to_func(input_object):
@@ -57,24 +58,31 @@ def make_string_alphanum(input_string, permitted_characters="._- ", invalid_repl
         invalid_replacement if invalid_replacement is not None else "") for x in input_string)
 
 
-def replace_signature(signature_donor):
+def copy_signature_from(signature_source_func, ensure_compatible_args=False, *wrap_args, **wrap_kwargs):
     """
-    It's far too complicated to merge signatures: https://github.com/Kwpolska/merge_args/blob/master/merge_args.py
-    https://stackoverflow.com/a/60832711
+    Based on https://stackoverflow.com/a/64605018.
+    Replaces all signature features in a target_func with ones given by a signature_source_func.
+    Any other arguments are passed to functools.wraps.
 
-    :param signature_donor:
-    :type signature_donor:
-    :return:
-    :rtype:
+    It appears to be the only valid way to carry over information from an "inner" func, since merging seems to be rather
+    complicated: see https://github.com/Kwpolska/merge_args/blob/master/merge_args.py or
+    https://chriswarrick.com/blog/2018/09/20/python-hackery-merging-signatures-of-two-python-functions/ for an example.
+
+    :param signature_source_func: A function that will be used to copy its signatures to a decorated func.
+    :type signature_source_func: function
+    :return: A decorator that will replace target_func's signature with one from signature_source_func.
+    :rtype: function
     """
-    def func_decorator(wrapped_func):
-        @wraps(signature_donor)
+    def signature_copy_decorator(target_func):
+        @wraps(signature_source_func, *wrap_args, **wrap_kwargs)  # copy source func's docstring and annotations
         def wrapper(*args, **kwargs):
-            return wrapped_func(*args, **kwargs)
-
+            if ensure_compatible_args:
+                signature(signature_source_func).bind(*args, **kwargs)
+            return target_func(*args, **kwargs)
+        wrapper.__signature__ = signature(signature_source_func)  # copy signature from source func
         return wrapper
 
-    return func_decorator
+    return signature_copy_decorator
 
 
 def append_docstring(signature_donor, doc_join_string="\nThis function extends the following functionality:\n"):
