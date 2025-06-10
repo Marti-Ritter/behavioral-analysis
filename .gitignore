@@ -7,6 +7,7 @@
 !README.md
 !moseq_tools/**
 !pandas_tools/**
+!frame_pipeline/**
 !tracking_tools/**
 !utility/**
 !visualization/**
