@@ -1,0 +1,3 @@
+[submodule "frame_pipeline"]
+	path = frame_pipeline
+	url = https://github.com/Marti-Ritter/frame-pipeline.git
