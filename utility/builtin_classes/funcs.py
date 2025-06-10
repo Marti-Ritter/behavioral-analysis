@@ -4,17 +4,17 @@ from .dicts import ensure_keys_in_dict, invert_flat_dict
 from .iterables import split_chunks
 
 
+def get_function_param_types(func):
+    sig = inspect.signature(func)
+    parameter_kind = {param_name: param_obj.kind.name for param_name, param_obj in sig.parameters.items()}
+    return invert_flat_dict(parameter_kind, unpack_list_values=False)
+
+
 def get_func_kwargs(func):
     params = get_function_param_types(func)
     params = ensure_keys_in_dict(params, ("POSITIONAL_ONLY", "POSITIONAL_OR_KEYWORD", "KEYWORD_ONLY"),
                                  default_value=[])
     return (*params["POSITIONAL_OR_KEYWORD"], *params["KEYWORD_ONLY"])
-
-
-def get_function_param_types(func):
-    sig = inspect.signature(func)
-    parameter_kind = {param_name: param_obj.kind.name for param_name, param_obj in sig.parameters.items()}
-    return invert_flat_dict(parameter_kind, unpack_list_values=False)
 
 
 def get_function_defaults(func):

@@ -12,7 +12,8 @@ from scipy.cluster.hierarchy import linkage, dendrogram
 from scipy.spatial.distance import squareform
 from tqdm.auto import tqdm
 
-from frame_pipeline.matplotlib_funcs import create_canvas, save_matplotlib_animation
+from frame_pipeline.matplotlib_funcs import create_canvas
+from matplotlib_tools.funcs import save_matplotlib_animation
 from ..tracking_tools.plots import normalize_keypoint_df_for_plotting, plot_keypoint_instance
 
 from .syllable_funcs import normalize_median_trajectories_for_plotting

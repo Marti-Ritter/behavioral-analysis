@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 import seaborn as sns
 
-from ..frame_pipeline.matplotlib_funcs import create_canvas, save_matplotlib_animation
+from ..frame_pipeline.matplotlib_funcs import create_canvas
+from matplotlib_tools.funcs import save_matplotlib_animation
 
 
 def plot_keypoints(keypoint_df, ax=None, x="x", y="y", **plot_kwargs):
